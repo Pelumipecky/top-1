@@ -1,0 +1,186 @@
+/* Admin Components Styles */
+
+/* Stat Card */
+.statCard {
+  background: var(--dark-clr2);
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statCard h3 {
+  font-size: 14px;
+  color: var(--text-clr2);
+  margin: 0;
+}
+
+.statCard .value {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--text-clr1);
+}
+
+.statCard .change {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.statCard .change.positive {
+  color: #4CAF50;
+}
+
+.statCard .change.negative {
+  color: #F44336;
+}
+
+/* Data Tables */
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--dark-clr4);
+}
+
+.dataTable th {
+  background: var(--dark-clr3);
+  color: var(--text-clr2);
+  font-weight: 600;
+}
+
+.dataTable tbody tr:hover {
+  background: var(--dark-clr3);
+}
+
+.dataTable .status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dataTable .status.pending {
+  background: rgba(255, 152, 0, 0.1);
+  color: #FF9800;
+}
+
+.dataTable .status.approved {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.dataTable .status.rejected {
+  background: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+/* Filter Section */
+.filterSection {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchBox input {
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: 1px solid var(--dark-clr4);
+  background: var(--dark-clr2);
+  color: var(--text-clr1);
+  width: 300px;
+  font-size: 14px;
+}
+
+.statusFilter {
+  display: flex;
+  gap: 10px;
+}
+
+.statusFilter button {
+  padding: 8px 15px;
+  border-radius: 5px;
+  border: 1px solid var(--dark-clr4);
+  background: var(--dark-clr2);
+  color: var(--text-clr1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.statusFilter button.active {
+  background: var(--primary-clr);
+  border-color: var(--primary-clr);
+}
+
+.sortOptions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sortOptions select {
+  padding: 8px 15px;
+  border-radius: 5px;
+  border: 1px solid var(--dark-clr4);
+  background: var(--dark-clr2);
+  color: var(--text-clr1);
+  cursor: pointer;
+}
+
+.sortOptions button {
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--dark-clr4);
+  background: var(--dark-clr2);
+  color: var(--text-clr1);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--dark-clr4);
+  background: var(--dark-clr2);
+  color: var(--text-clr1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background: var(--primary-clr);
+  border-color: var(--primary-clr);
+}
+
+/* Dashboard Stats */
+.dashboardStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}

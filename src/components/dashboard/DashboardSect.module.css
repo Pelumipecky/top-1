@@ -1,0 +1,250 @@
+.packages {
+  padding: 2rem 0;
+  margin: 0 auto 2rem;
+  background: linear-gradient(135deg, rgba(0,20,40,0.4) 0%, rgba(0,10,20,0.4) 100%);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  max-width: 1600px;
+  width: 95%;
+  position: relative;
+  z-index: 1;
+}
+
+@media screen and (max-width: 1024px) {
+  .packages {
+    padding: 2rem 0;
+    margin: 1.5rem auto;
+    width: 90%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .packages {
+    padding: 2rem 0;
+    margin: 1rem auto;
+    width: 95%;
+    border-radius: 15px;
+  }
+}
+
+.packagesTitle {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2.5em;
+  font-weight: 600;
+  background: linear-gradient(135deg, #fff 0%, #a3a3a3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(255,255,255,0.1);
+}
+
+.packageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);  /* Default desktop view: 3 columns */
+  gap: 2rem;
+  padding: 0 2rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Tablet view */
+@media screen and (max-width: 1024px) {
+  .packageGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 0 1.5rem;
+  }
+
+  .packagesTitle {
+    font-size: 2em;
+  }
+}
+
+/* Mobile view */
+@media screen and (max-width: 768px) {
+  .packageGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .packageCard {
+    max-width: 400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .packagesTitle {
+    font-size: 1.8em;
+    padding: 0 1rem;
+  }
+
+  .packagePrice {
+    font-size: 1.5em;
+  }
+
+  .packageTitle {
+    font-size: 1.8em;
+  }
+}
+
+.packageCard {
+  background: rgba(0,20,40,0.6);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 500px;
+}
+
+@media screen and (max-width: 1200px) {
+  .packageCard {
+    padding: 2rem 1.5rem;
+    min-height: 450px;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .packageCard {
+    min-height: 480px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .packageCard {
+    padding: 2rem 1.5rem;
+    min-height: 420px;
+  }
+
+  .featureItem {
+    padding: 0.6rem;
+    font-size: 0.95em;
+  }
+
+  .investButton {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.95em;
+  }
+}
+
+.packageCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.packageCard.diamond {
+  background: linear-gradient(135deg, rgba(0,60,120,0.6) 0%, rgba(0,30,60,0.6) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.packageTitle {
+  font-size: 2em;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.diamond .packageTitle {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.3);
+}
+
+.packagePrice {
+  text-align: center;
+  font-size: 1.8em;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.packagePrice::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--text-clr1), transparent);
+  transition: width 0.3s ease;
+}
+
+.packageCard:hover .packagePrice::after {
+  width: 100px;
+}
+
+.featureList {
+  list-style: none;
+  margin: 1.5rem 0;
+  flex-grow: 1;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.featureItem:hover {
+  background: rgba(255,255,255,0.05);
+  transform: translateX(5px);
+}
+
+.featureIcon {
+  color: #2DC194;
+  font-size: 1.2em;
+}
+
+.featureText {
+  color: rgba(255,255,255,0.9);
+  font-size: 1em;
+}
+
+.investButton {
+  margin-top: auto;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.standardButton {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+}
+
+.standardButton:hover {
+  border-color: rgba(255,255,255,0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255,255,255,0.1);
+}
+
+.diamondButton {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  border: none;
+}
+
+.diamondButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(255,215,0,0.3);
+}

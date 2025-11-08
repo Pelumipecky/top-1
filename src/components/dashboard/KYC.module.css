@@ -1,0 +1,163 @@
+.kycContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.stepIndicator {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stepIndicator span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--main);
+  opacity: 0.3;
+}
+
+.stepIndicator span.active {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.kycForm {
+  background: var(--lightBG);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.formGroup select,
+.formGroup input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.formGroup select:focus,
+.formGroup input[type="text"]:focus {
+  border-color: var(--main);
+  outline: none;
+}
+
+.fileUpload {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.fileInput {
+  position: relative;
+}
+
+.fileInput input[type="file"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.fileInput .uploadBox {
+  border: 2px dashed rgba(0,0,0,0.1);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background: white;
+  transition: all 0.2s;
+}
+
+.fileInput:hover .uploadBox {
+  border-color: var(--main);
+}
+
+.filePreview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.filePreview i {
+  font-size: 24px;
+  color: var(--main);
+}
+
+.statusBox {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: white;
+  text-align: center;
+}
+
+.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.verified {
+  background: #d4edda;
+  color: #155724;
+}
+
+.rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--main);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--mainHover);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.helper {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

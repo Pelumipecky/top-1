@@ -1,0 +1,58 @@
+.rightLeftProfile {
+  margin-top: auto;
+  padding: 20px;
+  width: 100%;
+}
+
+.rightLeftProfile button {
+  width: 100%;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--opac-clr3);
+  color: var(--text-clr1);
+  border: 1px solid var(--opac-clr3);
+  border-radius: 8px;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.rightLeftProfile button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.rightLeftProfile button:hover {
+  background: var(--danger-clr);
+  border-color: var(--danger-clr);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 18, 98, 0.3);
+}
+
+.rightLeftProfile button:hover::before {
+  left: 100%;
+}
+
+.rightLeftProfile button:active {
+  transform: translateY(0);
+}
+
+.rightLeftProfile button i {
+  font-size: 1.2em;
+}
