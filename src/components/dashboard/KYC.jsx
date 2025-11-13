@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../database/firebaseConfig';
+import { db, storage } from '../../database/firebaseConfig';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import styles from './KYC.module.css';
 
 export default function KYC({ currentUser }) {
@@ -12,8 +12,8 @@ export default function KYC({ currentUser }) {
   const [submitting, setSubmitting] = useState(false);
   const [kycStatus, setKycStatus] = useState('');
   const [step, setStep] = useState(1);
-
-  const storage = getStorage();
+  const [dragActive, setDragActive] = useState({ id: false, selfie: false });
+  const [uploadStatus, setUploadStatus] = useState('');
 
   useEffect(() => {
     const fetchKycStatus = async () => {
@@ -29,51 +29,131 @@ export default function KYC({ currentUser }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUser?.id) return alert('User not authenticated');
-    if (!idNumber) return alert('Please enter ID number');
+    
+    // Prevent double submission
+    if (submitting) {
+      console.log('Already submitting, ignoring duplicate submission');
+      return;
+    }
+    
+    // Validation checks
+    if (!currentUser?.id) {
+      alert('User not authenticated');
+      return;
+    }
+    
+    if (!idNumber.trim()) {
+      alert('Please enter ID number');
+      return;
+    }
+    
+    if (!idFile) {
+      alert('Please upload your ID document');
+      return;
+    }
+    
+    if (!selfieFile) {
+      alert('Please upload a selfie with your ID');
+      return;
+    }
 
+    console.log('Starting KYC submission...', {
+      currentUser: currentUser?.id,
+      idNumber,
+      idType,
+      hasIdFile: !!idFile,
+      hasSelfieFile: !!selfieFile
+    });
     setSubmitting(true);
+    
+    // Add timeout protection
+    const timeoutId = setTimeout(() => {
+      console.error('KYC submission timeout - resetting state');
+      setSubmitting(false);
+      alert('Submission timeout. Please try again.');
+    }, 60000); // 60 second timeout
+    
     try {
       const uploaded = {};
+      
+      console.log('Uploading ID document...');
+      setUploadStatus('Uploading ID document...');
       if (idFile) {
         const path = `kyc/${currentUser.id}/id_${Date.now()}_${idFile.name}`;
         const idRef = ref(storage, path);
         await uploadBytes(idRef, idFile);
         uploaded.idUrl = await getDownloadURL(idRef);
+        console.log('ID document uploaded successfully');
       }
+      
+      console.log('Uploading selfie...');
+      setUploadStatus('Uploading selfie...');
       if (selfieFile) {
         const path = `kyc/${currentUser.id}/selfie_${Date.now()}_${selfieFile.name}`;
         const selfieRef = ref(storage, path);
         await uploadBytes(selfieRef, selfieFile);
         uploaded.selfieUrl = await getDownloadURL(selfieRef);
+        console.log('Selfie uploaded successfully');
       }
 
+      console.log('Creating KYC record...');
+      setUploadStatus('Saving to database...');
       // Create kyc record
       await addDoc(collection(db, 'kyc'), {
         userId: currentUser.id,
-        idnum: currentUser.idnum,
+        idnum: currentUser.idnum || '',
         userName: currentUser.name || '',
         idType,
-        idNumber,
+        idNumber: idNumber.trim(),
         idUrl: uploaded.idUrl || null,
         selfieUrl: uploaded.selfieUrl || null,
         status: 'Pending',
         submittedAt: serverTimestamp(),
       });
+      console.log('KYC record created successfully');
 
+      console.log('Updating user document...');
       // Update user doc kycStatus
       const userRef = doc(db, 'userlogs', currentUser.id);
-      await updateDoc(userRef, { kycStatus: 'Pending', kycSubmittedAt: serverTimestamp() });
+      await updateDoc(userRef, { 
+        kycStatus: 'Pending', 
+        kycSubmittedAt: serverTimestamp() 
+      });
+      console.log('User document updated successfully');
 
-      alert('KYC submitted successfully');
+      clearTimeout(timeoutId);
+      alert('KYC submitted successfully! Your documents are now being reviewed.');
+      setKycStatus('Pending');
+      setStep(1);
       setIdNumber('');
       setIdFile(null);
       setSelfieFile(null);
+      setUploadStatus('');
+      
     } catch (err) {
-      console.error('KYC submit error', err);
-      alert('Error submitting KYC');
+      clearTimeout(timeoutId);
+      console.error('KYC submission error:', err);
+      console.error('Error details:', {
+        message: err.message,
+        code: err.code,
+        stack: err.stack
+      });
+      
+      let errorMessage = 'Error submitting KYC. ';
+      if (err.code === 'storage/unauthorized') {
+        errorMessage += 'File upload permission denied.';
+      } else if (err.code === 'permission-denied') {
+        errorMessage += 'Database permission denied.';
+      } else if (err.message.includes('network')) {
+        errorMessage += 'Network error. Please check your connection.';
+      } else {
+        errorMessage += 'Please try again or contact support.';
+      }
+      
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
+      setUploadStatus('');
     }
   };
 
@@ -96,6 +176,38 @@ export default function KYC({ currentUser }) {
 
   const nextStep = () => setStep(s => Math.min(s + 1, 2));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragIn = (e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(prev => ({ ...prev, [type]: true }));
+  };
+
+  const handleDragOut = (e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(prev => ({ ...prev, [type]: false }));
+  };
+
+  const handleDrop = (e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(prev => ({ ...prev, [type]: false }));
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (type === 'id') {
+        setIdFile(file);
+      } else if (type === 'selfie') {
+        setSelfieFile(file);
+      }
+    }
+  };
 
   return (
     <div className="investmentMainCntn">
@@ -150,14 +262,26 @@ export default function KYC({ currentUser }) {
                 <div className={styles.formGroup}>
                   <label>ID Document</label>
                   <div className={styles.fileInput}>
-                    <div className={styles.uploadBox}>
+                    <div 
+                      className={`${styles.uploadBox} ${dragActive.id ? styles.dragActive : ''}`}
+                      onClick={() => document.getElementById('idFileInput').click()}
+                      onDrag={handleDrag}
+                      onDragStart={handleDrag}
+                      onDragEnd={handleDrag}
+                      onDragOver={handleDrag}
+                      onDragEnter={(e) => handleDragIn(e, 'id')}
+                      onDragLeave={(e) => handleDragOut(e, 'id')}
+                      onDrop={(e) => handleDrop(e, 'id')}
+                    >
                       <i className="icofont-upload-alt"></i>
                       <p>Drop your ID document here or click to browse</p>
                     </div>
                     <input 
+                      id="idFileInput"
                       type="file" 
                       accept="image/*,.pdf" 
                       onChange={(e) => setIdFile(e.target.files[0])} 
+                      style={{ display: 'none' }}
                     />
                   </div>
                   {idFile && (
@@ -172,14 +296,26 @@ export default function KYC({ currentUser }) {
                 <div className={styles.formGroup}>
                   <label>Selfie with ID</label>
                   <div className={styles.fileInput}>
-                    <div className={styles.uploadBox}>
+                    <div 
+                      className={`${styles.uploadBox} ${dragActive.selfie ? styles.dragActive : ''}`}
+                      onClick={() => document.getElementById('selfieFileInput').click()}
+                      onDrag={handleDrag}
+                      onDragStart={handleDrag}
+                      onDragEnd={handleDrag}
+                      onDragOver={handleDrag}
+                      onDragEnter={(e) => handleDragIn(e, 'selfie')}
+                      onDragLeave={(e) => handleDragOut(e, 'selfie')}
+                      onDrop={(e) => handleDrop(e, 'selfie')}
+                    >
                       <i className="icofont-camera"></i>
                       <p>Take a selfie holding your ID or upload one</p>
                     </div>
                     <input 
+                      id="selfieFileInput"
                       type="file" 
                       accept="image/*" 
                       onChange={(e) => setSelfieFile(e.target.files[0])} 
+                      style={{ display: 'none' }}
                     />
                   </div>
                   {selfieFile && (
@@ -205,8 +341,19 @@ export default function KYC({ currentUser }) {
                   type="submit" 
                   className={styles.submitButton}
                   disabled={submitting || !idFile || !selfieFile}
+                  style={{ 
+                    opacity: submitting ? 0.7 : 1,
+                    cursor: submitting ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  {submitting ? 'Submitting...' : 'Submit KYC'}
+                  {submitting ? (
+                    <>
+                      <i className="icofont-spinner-alt-2" style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }}></i>
+                      {uploadStatus || 'Processing...'}
+                    </>
+                  ) : (
+                    'Submit KYC'
+                  )}
                 </button>
               </div>
             </>

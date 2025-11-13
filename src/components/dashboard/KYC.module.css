@@ -1,69 +1,98 @@
 .kycContainer {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .stepIndicator {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1rem;
+  padding: 20px;
+  background: rgba(6, 114, 205, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
 }
 
 .stepIndicator span {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--primary-clr);
   opacity: 0.3;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .stepIndicator span.active {
   opacity: 1;
-  transform: scale(1.2);
+  transform: scale(1.4);
+  box-shadow: 0 0 15px rgba(6, 114, 205, 0.5);
+}
+
+.stepIndicator span.active::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border: 2px solid var(--primary-clr);
+  border-radius: 50%;
+  opacity: 0.5;
 }
 
 .kycForm {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  margin-bottom: 2rem;
 }
 
 .formGroup {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .formGroup label {
   display: block;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--dark-clr1);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .formGroup select,
 .formGroup input[type="text"] {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 8px;
+  padding: 1rem;
+  border: 2px solid rgba(6, 114, 205, 0.2);
+  border-radius: 12px;
   background: white;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  color: var(--dark-clr1);
 }
 
 .formGroup select:focus,
 .formGroup input[type="text"]:focus {
-  border-color: var(--main);
+  border-color: var(--primary-clr);
   outline: none;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(6, 114, 205, 0.15);
 }
 
 .fileUpload {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin: 1rem 0;
+  gap: 1.5rem;
+  margin: 2rem 0;
 }
 
 .fileInput {
@@ -79,140 +108,311 @@
 }
 
 .fileInput .uploadBox {
-  border: 2px dashed rgba(0,0,0,0.1);
-  border-radius: 8px;
-  padding: 2rem;
+  border: 2px dashed var(--primary-clr);
+  border-radius: 15px;
+  padding: 3rem;
   text-align: center;
-  background: white;
-  transition: all 0.2s;
+  background: rgba(6, 114, 205, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.fileInput .uploadBox::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(6, 114, 205, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
 .fileInput:hover .uploadBox {
-  border-color: var(--primary-clr);
+  border-color: var(--sec-clr);
+  background: rgba(216, 163, 26, 0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(6, 114, 205, 0.2);
+}
+
+.fileInput:hover .uploadBox::before {
+  left: 100%;
+}
+
+.uploadBox i {
+  font-size: 3rem;
+  color: var(--primary-clr);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.uploadBox p {
+  color: var(--dark-clr1);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.dragActive {
+  border-color: var(--sec-clr) !important;
+  background: rgba(216, 163, 26, 0.15) !important;
+  transform: scale(1.02) !important;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .filePreview {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  margin-top: 0.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(6, 114, 205, 0.1), rgba(216, 163, 26, 0.1));
+  border-radius: 12px;
+  margin-top: 1rem;
+  border: 1px solid rgba(6, 114, 205, 0.2);
+  transition: all 0.3s ease;
+}
+
+.filePreview:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(6, 114, 205, 0.15);
 }
 
 .filePreview i {
-  font-size: 24px;
+  font-size: 28px;
   color: var(--primary-clr);
+  background: white;
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(6, 114, 205, 0.2);
 }
 
 .statusBox {
-  margin-top: 2rem;
-  padding: 1rem;
-  border-radius: 8px;
-  background: white;
+  margin-top: 3rem;
+  padding: 2rem;
+  border-radius: 15px;
   text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusBox::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: currentColor;
+  opacity: 0.3;
 }
 
 .pending {
-  background: #fff3cd;
+  background: linear-gradient(135deg, #fff3cd, #ffeeba);
   color: #856404;
+  border: 2px solid #f0ad4e;
+  box-shadow: 0 8px 25px rgba(240, 173, 78, 0.3);
 }
 
 .verified {
-  background: #d4edda;
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
   color: #155724;
+  border: 2px solid #28a745;
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
 .rejected {
-  background: #f8d7da;
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
   color: #721c24;
+  border: 2px solid #dc3545;
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
 }
 
 .submitButton {
   width: 100%;
-  padding: 1rem;
+  padding: 1.25rem;
   border: none;
-  border-radius: 8px;
-  background: var(--primary-clr);
+  border-radius: 15px;
+  background: var(--linear-grad2);
   color: white;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.submitButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
 }
 
 .submitButton:hover:not(:disabled) {
-  background: #0556a3;
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(6, 114, 205, 0.4);
+}
+
+.submitButton:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .submitButton:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .helper {
-  font-size: 0.875rem;
-  color: #6c757d;
-  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--grey-clr);
+  margin-top: 0.5rem;
+  font-style: italic;
 }
 
 .error {
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  color: var(--danger-clr);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  padding: 0.5rem;
+  background: rgba(220, 18, 98, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid var(--danger-clr);
 }
 
 /* Ensure the overview section is styled */
 .overviewSection {
   display: block;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: rgba(6, 114, 205, 0.05);
+  border-radius: 15px;
+  border: 1px solid rgba(6, 114, 205, 0.1);
 }
 
 .overviewSection h2 {
-  margin: 0;
+  margin: 0 0 1rem 0;
   padding: 0;
-  font-size: 1.5rem;
-  color: #333;
+  font-size: 1.8rem;
+  color: var(--dark-clr1);
+  background: var(--linear-grad2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .kycContainer {
-    padding: 10px;
+    padding: 0;
     margin: 0;
     max-width: 100%;
     width: 100%;
   }
   
   .kycForm {
-    padding: 1rem;
-    margin: 0;
-    width: 100%;
+    padding: 1.5rem;
+    margin: 0 10px;
+    width: calc(100% - 20px);
     box-sizing: border-box;
+    border-radius: 15px;
+  }
+  
+  .stepIndicator {
+    padding: 15px;
+    margin-bottom: 2rem;
+  }
+  
+  .stepIndicator span {
+    width: 10px;
+    height: 10px;
   }
   
   .formGroup {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .formGroup label {
+    font-size: 1rem;
   }
   
   .formGroup input,
   .formGroup select {
     width: 100%;
     box-sizing: border-box;
+    padding: 0.875rem;
   }
   
   .fileInput .uploadBox {
-    padding: 1.5rem 1rem;
+    padding: 2rem 1rem;
+  }
+  
+  .filePreview {
+    padding: 1rem;
+  }
+  
+  .filePreview i {
+    font-size: 24px;
+    padding: 8px;
   }
   
   .submitButton {
-    padding: 0.875rem;
-    font-size: 0.9rem;
+    padding: 1rem;
+    font-size: 1rem;
     width: 100%;
   }
   
+  .overviewSection {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
   .overviewSection h2 {
-    font-size: 1.25rem;
+    font-size: 1.4rem;
+  }
+  
+  .statusBox {
+    padding: 1.5rem;
+    margin-top: 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .kycForm {
+    padding: 1rem;
+    margin: 0 5px;
+    width: calc(100% - 10px);
+  }
+  
+  .overviewSection {
+    padding: 1rem;
+  }
+  
+  .overviewSection h2 {
+    font-size: 1.2rem;
+  }
+  
+  .fileInput .uploadBox {
+    padding: 1.5rem 0.5rem;
   }
 }

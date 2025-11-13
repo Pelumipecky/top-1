@@ -33,27 +33,23 @@ export default function App({ Component, pageProps }) {
 
         const checkSessionExpiry = () => {
             try {
+                // Skip session check if on public paths
+                if (publicPaths.includes(router.pathname)) {
+                    return true;
+                }
+                
                 const lastActivity = parseInt(localStorage.getItem('lastActivity') || '0', 10);
                 const now = Date.now();
+                
                 if (lastActivity === 0) {
                     updateActivity();
                     return true;
                 }
                 
-                // Skip expiry check if we're already on a public path
-                if (publicPaths.includes(router.pathname)) {
-                    return true;
-                }
-                
                 if (now - lastActivity > config.sessionTimeout) {
-                    // Get current path before clearing storage
-                    const currentPath = router.pathname;
                     localStorage.clear();
                     try { sessionStorage.clear(); } catch (e) { }
-                    // Only navigate if not already on signin
-                    if (currentPath !== '/signin') {
-                        router.push('/signin?systemRedirect=true');
-                    }
+                    router.replace('/signin');
                     return false;
                 }
                 return true;
@@ -77,41 +73,35 @@ export default function App({ Component, pageProps }) {
   }, [router]);
 
   useEffect(() => {
-    // Route-guard: redirect unauthenticated users away from protected pages
-    const handleRouteChange = (url) => {
+    // Simplified route guard - only run once on mount, not on every route change
+    const checkAuth = () => {
       if (typeof window === 'undefined') return;
-      const path = url.split('?')[0];
-      const user = JSON.parse(localStorage.getItem('activeUser') || 'null');
-
-      // update activity
-      try { localStorage.setItem('lastActivity', Date.now().toString()); } catch (e) {}
-
-      // Check if the current navigation is part of our routing logic to prevent loops
-      const isSystemNavigation = router.asPath.includes('?systemRedirect=true');
       
-      // Skip route guard checks if we're already doing a system redirect
-      if (isSystemNavigation) return;
-
-      if (!publicPaths.includes(path) && !user?.id) {
-        // avoid pushing to signin if we're already navigating there
-        if (path !== '/signin') {
-          router.replace('/signin?systemRedirect=true');
+      try {
+        const path = router.pathname;
+        const user = JSON.parse(localStorage.getItem('activeUser') || 'null');
+        
+        // Skip if already navigating with system flag
+        if (router.asPath.includes('?systemRedirect=true')) return;
+        
+        // If on protected page without auth, go to signin
+        if (!publicPaths.includes(path) && !user?.id) {
+          router.replace('/signin');
+          return;
         }
-        return;
-      }
-
-      if (publicPaths.includes(path) && user?.id) {
-        const dest = user.admin ? '/dashboard_admin' : '/profile';
-        // only navigate if not already on the destination
-        if (path !== dest) {
-          router.replace(`${dest}?systemRedirect=true`);
+        
+        // If authenticated user on public page, redirect to dashboard
+        if (publicPaths.includes(path) && user?.id && path !== '/') {
+          const dest = user.admin ? '/dashboard_admin' : '/profile';
+          router.replace(dest);
         }
+      } catch (e) {
+        console.warn('Auth check failed:', e);
       }
     };
 
-    handleRouteChange(router.pathname);
-    router.events.on('routeChangeStart', handleRouteChange);
-    return () => router.events.off('routeChangeStart', handleRouteChange);
+    // Run auth check once on mount
+    checkAuth();
   }, [router]);
 
   return (
