@@ -1,27 +1,23 @@
 import React from 'react'
-import { db } from "../../database/firebaseConfig";
-import { doc, updateDoc, addDoc, collection, query, where, getDocs, runTransaction } from "firebase/firestore";
+import { supabaseDb } from "../../database/supabaseUtils";
 
 const UnitInvestSect = ({ setInvestData, setProfileState, investData, currentUser }) => {
-  // use shared `db` instance from firebaseConfig
-  const colRefNotif = collection(db, "notifications");
-
   const notificationPush = {
     message: `Your $${investData?.capital} ${investData?.plan} investment plan has been activated`,
-    dateTime: new Date().toISOString(),
     idnum: investData.idnum,
     status: "unseen"
   };
 
-  const handleDetailUpdate = () => {
-    const docRef = doc(db, "investments", investData?.id);
-
-    updateDoc(docRef, {
-      roi: investData?.roi,
-      authStatus: "seen"
-    });
-
-    setProfileState("Investments");
+  const handleDetailUpdate = async () => {
+    try {
+      await supabaseDb.updateInvestment(investData?.id, {
+        roi: investData?.roi,
+        authStatus: "seen"
+      });
+      setProfileState("Investments");
+    } catch (error) {
+      console.error("Error updating investment details:", error);
+    }
   };
 
   const handleActiveInvestment = async () => {
@@ -29,38 +25,22 @@ const UnitInvestSect = ({ setInvestData, setProfileState, investData, currentUse
     if (!ok) return;
 
     try {
-      const invRef = doc(db, "investments", investData?.id);
-
-      // find user doc
-      const usersCol = collection(db, "userlogs");
-      const q = query(usersCol, where("idnum", "==", investData?.idnum));
-      const userSnap = await getDocs(q);
-      const userDoc = !userSnap.empty ? userSnap.docs[0] : null;
-
-      const approvedAt = new Date().toISOString();
       const approvedBy = currentUser?.id || currentUser?.userName || 'admin';
 
-      // transaction to update investment and user
-      await runTransaction(db, async (tx) => {
-        tx.update(invRef, { status: "Active", date: approvedAt, authStatus: "seen", approvedBy, approvedAt });
-
-        if (userDoc) {
-          const userRef = doc(db, "userlogs", userDoc.id);
-          const udata = userDoc.data() || {};
-          const currentBalance = parseFloat(udata.balance) || 0;
-          const currentBonus = parseFloat(udata.bonus) || 0;
-          const creditAmount = parseFloat(investData?.capital) || 0;
-          const bonusAmount = parseFloat(investData?.bonus) || 0;
-          tx.update(userRef, { balance: currentBalance + creditAmount, bonus: currentBonus + bonusAmount, authStatus: "seen" });
-        }
+      await supabaseDb.activateInvestment(investData?.id, {
+        approvedBy,
+        capital: parseFloat(investData?.capital) || 0,
+        roi: parseFloat(investData?.roi) || 0,
+        bonus: parseFloat(investData?.bonus) || 0,
+        idnum: investData?.idnum,
+        creditBonus: false
       });
 
-      // push notification
-      await addDoc(colRefNotif, { ...notificationPush, dateTime: approvedAt });
+      await supabaseDb.createNotification(notificationPush);
       setProfileState("Investments");
     } catch (err) {
-      console.error('Error activating investment and crediting user (transaction):', err);
-      try { await addDoc(colRefNotif, { ...notificationPush }); } catch(e){}
+      console.error('Error activating investment:', err);
+      try { await supabaseDb.createNotification(notificationPush); } catch(e){}
       setProfileState("Investments");
     }
   };

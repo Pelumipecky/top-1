@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { db } from "../../database/firebaseConfig";
-import { doc, addDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { supabaseDb, supabase } from "../../database/supabaseUtils";
 
 const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, currentUser}) => {
     const router = useRouter();
@@ -9,10 +8,6 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
     const [withdrawalCode, setWithdrawalCode] = useState("");
     const [error, setError] = useState("");
     const [isVerifying, setIsVerifying] = useState(false);
-
-    const colRef = collection(db, "withdrawals");
-    const codesRef = collection(db, "withdrawalCodes");
-    const usersRef = collection(db, "userlogs");
     
     // Debug prices on mount
     useEffect(() => {
@@ -34,6 +29,7 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
     const [failureMessage, setFailureMessage] = useState("");
     const [selectedCodeDoc, setSelectedCodeDoc] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const isUserKycVerified = ((currentUser?.kyc_status) || '').toLowerCase() === 'verified';
 
     useEffect(() => {
         // start countdown when component mounts
@@ -76,24 +72,23 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
         setError("");
 
         try {
-            // Check if code exists and is unused (do not mark used yet)
-            const q = query(codesRef,
-                where("code", "==", withdrawalCode),
-                where("used", "==", false),
-                where("userId", "==", currentUser?.idnum)
-            );
+            // Check if code exists and is unused in Supabase
+            const { data, error } = await supabase
+                .from('withdrawal_codes')
+                .select('*')
+                .eq('code', withdrawalCode)
+                .eq('used', false)
+                .eq('user_id', currentUser?.idnum?.toString())
+                .single();
 
-            const snapshot = await getDocs(q);
-
-            if (snapshot.empty) {
+            if (error || !data) {
                 setError("Invalid or expired withdrawal code");
                 setIsVerifying(false);
                 return null;
             }
 
-            // return the document snapshot for later update
-            const codeDoc = snapshot.docs[0];
-            return codeDoc;
+            // return the data for later update
+            return data;
         } catch (err) {
             console.error("Error verifying code:", err);
             setError("Error verifying code. Please try again.");
@@ -110,7 +105,7 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
         }
 
         // Check KYC status before proceeding
-        if (!currentUser?.kycStatus || currentUser?.kycStatus !== 'verified') {
+        if (!isUserKycVerified) {
             setError("KYC verification required. Please complete KYC verification before making a withdrawal.");
             return;
         }
@@ -135,7 +130,7 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
         }
 
         // Check KYC status before processing withdrawal
-        if (!currentUser?.kycStatus || currentUser?.kycStatus !== 'verified') {
+        if (!isUserKycVerified) {
             setFailureMessage("KYC verification required. Please complete KYC before withdrawing.");
             setShowPopup(false);
             setIsProcessing(false);
@@ -148,7 +143,16 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
 
         try {
             // mark code used
-            await updateDoc(selectedCodeDoc.ref, { used: true, usedAt: new Date().toISOString() });
+            const { error: codeUpdateError } = await supabase
+                .from('withdrawal_codes')
+                .update({ 
+                    used: true, 
+                    status: 'used',
+                    updated_at: new Date().toISOString() 
+                })
+                .eq('id', selectedCodeDoc.id);
+
+            if (codeUpdateError) throw codeUpdateError;
 
             const amount = withdrawData?.amount ?? withdrawData?.capital ?? 0;
 
@@ -159,33 +163,40 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
                 return;
             }
 
-            await addDoc(colRef, {
+            // Create withdrawal record
+            const withdrawalData = {
                 ...withdrawData,
                 amount,
-                date: new Date().toISOString(),
-                withdrawalCode: withdrawalCode,
-                widthrawalFee: withdrawData?.paymentOption === "Bitcoin"
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                withdrawal_code: withdrawalCode,
+                widthrawal_fee: withdrawData?.paymentOption === "Bitcoin"
                     ? `${calculateCryptoAmount(amount, bitPrice, 'BTC')} BTC`
                     : withdrawData?.paymentOption === "Ethereum"
                     ? `${calculateCryptoAmount(amount, ethPrice, 'ETH')} ETH`
                     : 'N/A',
                 idnum: currentUser?.idnum,
                 status: "Pending"
-            });
+            };
+
+            const { error: withdrawalError } = await supabaseDb.createWithdrawal(withdrawalData);
+            if (withdrawalError) throw withdrawalError;
 
             // Deduct amount from user's available balance
             try {
-                const userQuery = query(usersRef, where("idnum", "==", currentUser?.idnum));
-                const userSnapshot = await getDocs(userQuery);
-                if (!userSnapshot.empty) {
-                    const userDoc = userSnapshot.docs[0];
-                    const currentBalance = parseFloat(userDoc.data().balance || 0);
-                    const newBalance = Math.max(0, currentBalance - parseFloat(amount));
-                    
-                    console.log('Updating balance:', { currentBalance, amount, newBalance });
-                    
-                    await updateDoc(userDoc.ref, { balance: newBalance });
-                    
+                const currentBalance = parseFloat(currentUser?.balance || 0);
+                const newBalance = Math.max(0, currentBalance - parseFloat(amount));
+                
+                console.log('Updating balance:', { currentBalance, amount, newBalance });
+                
+                const { error: balanceError } = await supabaseDb.updateUser(currentUser.id, { 
+                    balance: newBalance,
+                    updated_at: new Date().toISOString()
+                });
+                
+                if (balanceError) {
+                    console.warn("Could not update user balance:", balanceError);
+                } else {
                     // Update sessionStorage to reflect new balance immediately
                     try {
                         const activeUser = JSON.parse(sessionStorage.getItem('activeUser') || '{}');
@@ -238,7 +249,7 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
         <h2>Confirm Payment</h2>
 
         {/* KYC Status Warning */}
-        {(!currentUser?.kycStatus || currentUser?.kycStatus !== 'verified') && (
+        {!isUserKycVerified && (
             <div style={{
                 backgroundColor: 'rgba(220, 18, 98, 0.1)',
                 border: '2px solid var(--danger-clr)',
@@ -287,6 +298,57 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
                 >
                     Click here to complete your KYC
                 </button>
+            </div>
+        )}
+        
+        {/* KYC Verified Message */}
+        {isUserKycVerified && (
+            <div style={{
+                background: 'linear-gradient(135deg, #067c4d 0%, #0a9b6b 100%)',
+                border: '2px solid #067c4d',
+                borderRadius: '10px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.8rem',
+                boxShadow: '0 4px 15px rgba(6, 124, 77, 0.3)'
+            }}>
+                <div style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                }}>
+                    <i className="icofont-check" style={{ 
+                        fontSize: '1.5rem', 
+                        color: 'white',
+                        fontWeight: 'bold'
+                    }}></i>
+                </div>
+                <div>
+                    <strong style={{ 
+                        color: 'white', 
+                        display: 'block', 
+                        marginBottom: '0.2rem',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}>
+                        ✅ KYC Verified
+                    </strong>
+                    <span style={{ 
+                        fontSize: '0.9em', 
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        lineHeight: '1.3'
+                    }}>
+                        Your identity has been verified. You can proceed with your withdrawal.
+                    </span>
+                </div>
             </div>
         )}
 
