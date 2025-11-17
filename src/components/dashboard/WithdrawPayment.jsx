@@ -72,18 +72,38 @@ const WithdrawalPayment = ({setProfileState, withdrawData, bitPrice, ethPrice, c
         setError("");
 
         try {
-            // Check if code exists and is unused in Supabase
+            const identifierCandidates = [
+                currentUser?.idnum,
+                currentUser?.id,
+                currentUser?.uid
+            ]
+                .filter(Boolean)
+                .map((value) => value.toString().trim())
+                .filter(Boolean);
+
+            if (!identifierCandidates.length) {
+                setError("Unable to verify your withdrawal code because your account is missing an identifier.");
+                return null;
+            }
+
+            const uniqueIdentifiers = Array.from(new Set(identifierCandidates));
+
+            // Check if code exists, is unused, and belongs to current user (id or idnum)
             const { data, error } = await supabase
                 .from('withdrawal_codes')
                 .select('*')
                 .eq('code', withdrawalCode)
                 .eq('used', false)
-                .eq('user_id', currentUser?.idnum?.toString())
-                .single();
+                .in('user_id', uniqueIdentifiers)
+                .maybeSingle();
 
             if (error || !data) {
                 setError("Invalid or expired withdrawal code");
-                setIsVerifying(false);
+                return null;
+            }
+
+            if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) {
+                setError("Withdrawal code has expired. Request a new one.");
                 return null;
             }
 

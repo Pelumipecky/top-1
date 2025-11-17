@@ -455,10 +455,32 @@ export const supabaseDb = {
   },
 
   createWithdrawalCode: async (codeData) => {
-    const timestamp = new Date().toISOString();
+    const now = new Date();
+    const createdAt = now.toISOString();
+    const defaultExpiry = new Date(now.getTime() + 15 * 60 * 1000).toISOString();
+
+    const payload = {
+      ...codeData,
+      user_id: codeData?.user_id?.toString().trim(),
+      code: codeData?.code?.toString().trim(),
+      created_at: createdAt,
+      updated_at: createdAt,
+      expires_at: codeData?.expires_at || defaultExpiry,
+      status: codeData?.status || 'active',
+      used: typeof codeData?.used === 'boolean' ? codeData.used : false
+    };
+
+    if (!payload.user_id) {
+      throw new Error('createWithdrawalCode requires a user_id. Provide an idnum or user UUID.');
+    }
+
+    if (!payload.code || payload.code.length !== 6) {
+      throw new Error('createWithdrawalCode requires a 6-digit code.');
+    }
+
     const { data, error } = await supabase
       .from('withdrawal_codes')
-      .insert([{ ...codeData, created_at: timestamp, updated_at: timestamp }])
+      .insert([payload])
       .select()
       .single();
     return { data, error };

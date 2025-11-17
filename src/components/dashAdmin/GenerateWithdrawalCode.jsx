@@ -35,15 +35,48 @@ const GenerateWithdrawalCode = ({ onClose }) => {
 
         try {
             const code = generateRandomCode();
-            
+            const trimmedUserId = userId.trim();
+
+            // Resolve whether the admin entered an id (uuid) or idnum
+            let resolvedUser = null;
+            if (trimmedUserId) {
+                const { data: byId } = await supabaseDb.getUserById(trimmedUserId);
+                if (byId) {
+                    resolvedUser = byId;
+                } else {
+                    const { data: byIdnum } = await supabaseDb.getUserByIdnum(trimmedUserId);
+                    if (byIdnum) {
+                        resolvedUser = byIdnum;
+                    }
+                }
+            }
+
+            if (!resolvedUser) {
+                setError('User not found. Enter a valid Register ID or Supabase UUID.');
+                setIsGenerating(false);
+                return;
+            }
+
+            const resolvedIdentifier = (resolvedUser.idnum || resolvedUser.id || '').toString();
+            if (!resolvedIdentifier) {
+                setError('Unable to resolve a user identifier. Please verify the account.');
+                setIsGenerating(false);
+                return;
+            }
+
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
             await supabaseDb.createWithdrawalCode({
                 code,
-                user_id: userId,
+                user_id: resolvedIdentifier,
                 amount: parseFloat(amount),
-                used: false
+                expires_at: expiresAt,
+                used: false,
+                status: 'active'
             });
 
-            setSuccess(`Code ${code} generated successfully for user ${userId}`);
+            const friendlyName = resolvedUser.name || resolvedUser.userName || resolvedUser.email || resolvedIdentifier;
+            setSuccess(`Code ${code} generated successfully for ${friendlyName}`);
             setUserId('');
             setAmount('');
 
@@ -75,7 +108,7 @@ const GenerateWithdrawalCode = ({ onClose }) => {
                 
                 <div>
                     <label htmlFor="userId" style={{color: 'var(--text-deco)', marginBottom: '5px', display: 'block'}}>
-                        User ID
+                        User Register ID / UUID
                     </label>
                     <input
                         type="text"
@@ -92,6 +125,9 @@ const GenerateWithdrawalCode = ({ onClose }) => {
                             color: 'var(--text-deco)'
                         }}
                     />
+                    <small style={{ display: 'block', marginTop: '6px', color: 'var(--text-deco)' }}>
+                        Enter the user&apos;s Register ID (idnum) or Supabase UUID. We&apos;ll auto-detect the right identifier.
+                    </small>
                 </div>
 
                 <div>
