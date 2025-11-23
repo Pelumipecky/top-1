@@ -31,6 +31,11 @@ const About = () => {
           document.head.removeChild(script);
         };
     }, []);
+      // Client-only state for widget
+      const [isClient, setIsClient] = useState(false);
+      useEffect(() => {
+        setIsClient(true);
+      }, []);
     
     return (
         <div className='HomefirstPageCtn aboutMainCtn conatctMain' onClick={handleGrandMovementTraffic}>
@@ -58,7 +63,9 @@ const About = () => {
                 <Link className="borderBtn" href={"/about"}>More About Our Company...</Link>
               </div>
             </div>
-            <coingecko-coin-price-marquee-widget  coin-ids="bitcoin,ethereum,eos,ripple,litecoin,tron,dogecoin,stellar,algorand,flow,dai,usdd,maker,astar,tezos,solana,neo,gala,cardano,aptos,helium,kava" currency="usd" background-color="#000613" locale="en"></coingecko-coin-price-marquee-widget>
+            {isClient && (
+              <coingecko-coin-price-marquee-widget  coin-ids="bitcoin,ethereum,eos,ripple,litecoin,tron,dogecoin,stellar,algorand,flow,dai,usdd,maker,astar,tezos,solana,neo,gala,cardano,aptos,helium,kava" currency="usd" background-color="#000613" locale="en"></coingecko-coin-price-marquee-widget>
+            )}
 
             <div className="companyscopes">
               <div className="unitscope advantage">
